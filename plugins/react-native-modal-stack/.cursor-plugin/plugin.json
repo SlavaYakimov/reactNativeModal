@@ -1,0 +1,14 @@
+{
+    "name": "react-native-modal-stack",
+    "displayName": "React Native Modal Stack",
+    "version": "0.1.0",
+    "description": "Set up and author stacked bottom-sheet modals with @slavayakimov/react-native-modal-stack: typed registry, push/back navigation, kit sheets with a theme, keyboard-aware footers.",
+    "author": {
+        "name": "Slava Yakimov",
+        "url": "https://github.com/SlavaYakimov"
+    },
+    "homepage": "https://github.com/SlavaYakimov/reactNativeModal#readme",
+    "repository": "https://github.com/SlavaYakimov/reactNativeModal",
+    "license": "MIT",
+    "keywords": ["react-native", "modal", "bottom-sheet", "modal-stack", "expo", "keyboard"]
+}

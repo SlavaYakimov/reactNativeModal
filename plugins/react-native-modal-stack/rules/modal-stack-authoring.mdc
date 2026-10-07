@@ -1,0 +1,119 @@
+---
+description: Authoring bottom-sheet modals with @slavayakimov/react-native-modal-stack — createModalRegistry, push/back stack navigation, kit sheets, layout and keyboard-aware footers.
+globs: **/modals/**,**/*Modals.tsx,**/*Modal.tsx,**/*Sheet.tsx
+alwaysApply: false
+---
+
+# Modal stack authoring
+
+Package layers (import from the subpath, never from `src/` or `lib/`):
+
+| Subpath | Contents |
+|---|---|
+| `@slavayakimov/react-native-modal-stack/core` | `ModalController` (stack: `push`, `replace`, `pop`, `close`, `dismiss`, `openAfterClose`), no React |
+| `.../react` | `createModalRegistry`, `configureModals`, `ModalProvider`, `useModalDraft`, `toggleDraftId`, `useModalDismissHandler` |
+| `.../react-native` | `createSheetShell`, `FitBox`/`ContentBox`/`BareBox`, `FooterContent`, `FooterHeight`, `SheetHeaderBar`, `useKeyboardGeometry` |
+| `.../navigation` | `reactNavigationScreen` adapter |
+| `.../kit` | `KitSheetShell`, `ModalKitProvider`, `ActionMenuSheet`, `ConfirmSheet`, `OptionListSheet`, `CheckboxListSheet` |
+
+## Registry
+
+- `createModalRegistry<Ctx>("namespace")` — the namespace is unique per app (camelCase feature name). Runtime key is `namespace/key`, so keys inside a registry stay short (`actions`, `deleteConfirm`). A duplicate namespace with different keys logs `[modal-stack]` in dev.
+- Payload is declared with `m.def<P>({...})`; steps without payload use `m.def({...})`. `open("key")` without a required payload does not compile — that is the check. Never cast `payload` with `as`.
+- One `Portal` per registry per screen. Mount it as a sibling of the screen content, not inside a `ScrollView`.
+- `title` is passed through `translate` from `configureModals` (identity by default). Put the title in the registry **or** render `SheetHeaderBar`/`KitHeader` in the body — never both.
+- Pushed steps (anything reached with `push`) take their title from the registry, so the shell renders the back arrow and the title on one row.
+
+| Scenario | `layout` | Title | Footer |
+|---|---|---|---|
+| Menu, confirm, option list | `fit` | registry or kit `title` prop | kit sheets handle it; custom body → `FooterContent` |
+| `fit` + `TextInput` | `fit` | registry | `FooterContent` wrapping the buttons (required) |
+| Long form, address search | `form` | body | `FooterHeight` or `FooterContent includeKeyboard={false}` |
+| Long list with own styles | `scroll` | registry | own padding |
+| Pagination inside `fit` | `fit` | body | `useFitScrollNearEnd(fetchNext)` |
+
+## Data
+
+- Long-lived data (lists, handlers, `isPending`, selected id) → `Portal` props, read as `ctx` in `render`.
+- One-off data for a step (target id, mode) → payload: `open(name, payload)` / `push(name, payload)`, read as `payload`.
+- Async: the mutation lives on the screen or in the body; `isPending` → `disabled` + `isLoading`; close in `onSuccess`, not before the response. With `useModalDraft` and async commit pass `onClose: () => undefined`.
+- Callbacks in a payload must be one-shot. Repeatable handlers go into `ctx`.
+
+## Navigation
+
+| Need | API |
+|---|---|
+| Open the first step / replace the current one | `open(name, payload)` |
+| Go to a nested step with Back | `push(name, payload)` |
+| Back | `nav.back()`; a cancel button in a body: `nav.canGoBack ? nav.back : nav.close` |
+| Close everything after commit | `nav.close()` or `close()` from `useModal()` |
+| Jump to **another** registry, or race with the keyboard | `openAfterClose(name, payload)` |
+| From non-React code | `getDefaultModalController().push(XxxModals.request("key", payload))` |
+
+Swipe and backdrop call `controller.dismiss()`: depth > 1 pops, otherwise closes. To intercept (sub-view inside one step, busy state) use `useModalDismissHandler(handler, enabled)`; returning `true` keeps the sheet.
+
+Forbidden: `openAfterClose` inside one registry, `close()` on Back at depth > 1, `Keyboard.addListener` in modal bodies, fixed `paddingBottom` for the keyboard, deep imports.
+
+## Keyboard
+
+Read geometry only through `useKeyboardGeometry()` / `KeyboardGeometryStore`.
+`fit` — the shell does not lift; `FooterContent` (default `includeKeyboard`) grows the sheet. `form`/`scroll` — the shell lifts itself; `FooterContent includeKeyboard` there doubles the offset.
+
+## Kit sheets
+
+- `configureModals({ Shell: KitSheetShell })` once at app start; wrap the app in `ModalKitProvider theme={...}` for colours, radius, font sizes and default labels (`select`, `cancel`, `confirm`, `empty`).
+- `ActionMenuSheet` items push the next step; `ConfirmSheet` gets `onCancel = nav.canGoBack ? nav.back : nav.close`; `OptionListSheet` closes in `onSelect`; `CheckboxListSheet` with `initialSelectedIds` keeps a draft and closes the stack on confirm, with `selectedIds` it is controlled.
+- When the app has its own design system, build sheets with the same props shape and keep the kit only as a reference.
+
+## Template
+
+```tsx
+import { createModalRegistry } from "@slavayakimov/react-native-modal-stack/react";
+import { ActionMenuSheet, ConfirmSheet } from "@slavayakimov/react-native-modal-stack/kit";
+
+type Ctx = { onDelete: (id: string) => void; isDeleting: boolean };
+type Target = { id: string };
+
+const m = createModalRegistry<Ctx>("tasks");
+
+export const TaskModals = m.build({
+    actions: m.def<Target>({
+        layout: "fit",
+        render: ({ payload }) => <Actions target={payload} />,
+    }),
+    deleteConfirm: m.def<Target>({
+        layout: "fit",
+        title: "Delete task?",
+        render: ({ ctx, payload, nav }) => (
+            <ConfirmSheet
+                destructive
+                confirmLabel="Delete"
+                isLoading={ctx.isDeleting}
+                onCancel={nav.canGoBack ? nav.back : nav.close}
+                onConfirm={() => ctx.onDelete(payload.id)}
+            />
+        ),
+    }),
+});
+
+function Actions({ target }: { target: Target }) {
+    const { push } = TaskModals.useModal();
+    return (
+        <ActionMenuSheet
+            items={[{ key: "delete", label: "Delete", destructive: true, onPress: () => push("deleteConfirm", target) }]}
+        />
+    );
+}
+```
+
+Screen: `const { open } = TaskModals.useModal();` → `open("actions", { id })`, and `<TaskModals.Portal onDelete={...} isDeleting={...} />` next to the list.
+
+## Checklist
+
+- [ ] `createModalRegistry` with a unique namespace; payload declared in `m.def<P>`, no `as`.
+- [ ] One `Portal` per registry per screen, outside `ScrollView`.
+- [ ] Title in the registry or in the body, not both; pushed steps use the registry title.
+- [ ] `layout` and footer follow the table; `fit` + `TextInput` → `FooterContent`.
+- [ ] Nested steps use `push`, Back uses `nav.back`; `openAfterClose` only across registries.
+- [ ] Async: `isPending` → `disabled` + `isLoading`; close in `onSuccess`.
+- [ ] Smoke: open → nested step → back → swipe → leave the screen (no sheet left over the next screen).

@@ -1,0 +1,142 @@
+{
+    "name": "@slavayakimov/react-native-modal-stack",
+    "version": "0.1.0",
+    "description": "Stacked bottom-sheet modals for React Native: a framework-free stack controller, a typed modal registry with back navigation, a keyboard-aware sheet shell and ready-made sheet bodies.",
+    "license": "MIT",
+    "author": "Slava Yakimov",
+    "homepage": "https://github.com/SlavaYakimov/reactNativeModal#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SlavaYakimov/reactNativeModal.git"
+    },
+    "bugs": "https://github.com/SlavaYakimov/reactNativeModal/issues",
+    "keywords": [
+        "react-native",
+        "modal",
+        "bottom-sheet",
+        "modal-stack",
+        "navigation",
+        "keyboard",
+        "expo"
+    ],
+    "main": "./lib/core/index.js",
+    "types": "./lib/core/index.d.ts",
+    "react-native": "./src/core/index.ts",
+    "exports": {
+        ".": {
+            "types": "./lib/core/index.d.ts",
+            "react-native": "./src/core/index.ts",
+            "default": "./lib/core/index.js"
+        },
+        "./core": {
+            "types": "./lib/core/index.d.ts",
+            "react-native": "./src/core/index.ts",
+            "default": "./lib/core/index.js"
+        },
+        "./react": {
+            "types": "./lib/react/index.d.ts",
+            "react-native": "./src/react/index.ts",
+            "default": "./lib/react/index.js"
+        },
+        "./react-native": {
+            "types": "./lib/react-native/index.d.ts",
+            "react-native": "./src/react-native/index.ts",
+            "default": "./lib/react-native/index.js"
+        },
+        "./navigation": {
+            "types": "./lib/navigation/index.d.ts",
+            "react-native": "./src/navigation/index.ts",
+            "default": "./lib/navigation/index.js"
+        },
+        "./kit": {
+            "types": "./lib/kit/index.d.ts",
+            "react-native": "./src/kit/index.ts",
+            "default": "./lib/kit/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "typesVersions": {
+        "*": {
+            "core": [
+                "lib/core/index.d.ts"
+            ],
+            "react": [
+                "lib/react/index.d.ts"
+            ],
+            "react-native": [
+                "lib/react-native/index.d.ts"
+            ],
+            "navigation": [
+                "lib/navigation/index.d.ts"
+            ],
+            "kit": [
+                "lib/kit/index.d.ts"
+            ]
+        }
+    },
+    "files": [
+        "lib",
+        "src",
+        "README.md",
+        "LICENSE",
+        "CHANGELOG.md"
+    ],
+    "sideEffects": false,
+    "scripts": {
+        "build": "rm -rf lib && tsc -p tsconfig.build.json",
+        "typecheck": "tsc --noEmit",
+        "test": "jest",
+        "format": "prettier --write \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+        "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+        "validate:plugin": "node scripts/validate-plugin.mjs",
+        "check": "npm run typecheck && npm test && npm run build && npm run validate:plugin",
+        "prepare": "npm run build"
+    },
+    "peerDependencies": {
+        "@react-navigation/native": ">=6",
+        "react": ">=18",
+        "react-native": ">=0.72",
+        "react-native-gesture-handler": ">=2.9",
+        "react-native-reanimated": ">=3",
+        "react-native-safe-area-context": ">=4"
+    },
+    "peerDependenciesMeta": {
+        "@react-navigation/native": {
+            "optional": true
+        },
+        "react-native": {
+            "optional": true
+        },
+        "react-native-gesture-handler": {
+            "optional": true
+        },
+        "react-native-reanimated": {
+            "optional": true
+        },
+        "react-native-safe-area-context": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@babel/core": "^7.25.2",
+        "@react-native/babel-preset": "0.79.1",
+        "@react-navigation/native": "^7.1.6",
+        "@react-navigation/native-stack": "^7.3.10",
+        "@types/jest": "^29.5.13",
+        "@types/react": "^19.0.0",
+        "@types/react-test-renderer": "^19.0.0",
+        "jest": "^29.6.3",
+        "prettier": "^3.6.2",
+        "react": "19.0.0",
+        "react-native": "0.79.7",
+        "react-native-gesture-handler": "^2.25.0",
+        "react-native-reanimated": "~3.17.4",
+        "react-native-safe-area-context": "^5.4.0",
+        "react-native-screens": "4.10.0",
+        "react-test-renderer": "19.0.0",
+        "typescript": "^5.4.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
